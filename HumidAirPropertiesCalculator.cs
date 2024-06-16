@@ -15,9 +15,11 @@
 
         public static readonly double NormalPressure = 101325.0; // Pa
 
-        public static readonly double MaxCondenThermTemperature = 132.6312; // K
+        public static readonly double AirMaxCondenThermTemperature = 132.6312; // K
 
-        public static readonly double MaxCondenThermDensity = 10447.7; // mol / m^3
+        public static readonly double AirMaxCondenThermDensity = 10447.7; // mol / m^3
+
+        public static readonly double AirMaxCondenThermPressure = 3.78502e6; // Pa
 
         private static readonly Dictionary<int, double> DimensionlessDryAirIdealGasHelmholtzCoefficients = new()
         {
@@ -62,8 +64,8 @@
         /// <summary>
         /// Calculates the ideal gas contribution to the Helmholtz energy equation from Lemmon [2000] for dry air.
         /// </summary>
-        /// <param name="reciprocalReducedTemperature">Dimensionless temperature, scaled by MaxCondenThermTemperature</param>
-        /// <param name="reducedDensity">Dimensionless density, scaled by MaxCondenThermDensity </param>
+        /// <param name="reciprocalReducedTemperature">Dimensionless temperature, scaled by AirMaxCondenThermTemperature</param>
+        /// <param name="reducedDensity">Dimensionless density, scaled by AirMaxCondenThermDensity </param>
         /// <returns>Ideal gas dimensionless Helmholtz energy (A0 / RT)</returns>
         public static double CalculateDimensionlessIdealGasHelmholtzEnergy(double reciprocalReducedTemperature, double reducedDensity)
         {
@@ -121,9 +123,9 @@
 
         public static double CalculateDryAirSpecificHelmholtzEnergy(double temperature, double density)
         {
-            var reciprocalReducedTemperature = MaxCondenThermTemperature / temperature;
+            var reciprocalReducedTemperature = AirMaxCondenThermTemperature / temperature;
             var molarDensity = density / MolarMassDryAir;
-            var reducedDensity = molarDensity / MaxCondenThermDensity;
+            var reducedDensity = molarDensity / AirMaxCondenThermDensity;
             var dimensionlessHelmholtzEnergy = CalculateDimensionlessHelmholtzEnergy(reciprocalReducedTemperature, reducedDensity);
             var scaleConstant = UniversalGasConstantLemmon * temperature / MolarMassDryAir;
             return scaleConstant * dimensionlessHelmholtzEnergy;
