@@ -1,10 +1,10 @@
 ﻿namespace HumidAirPropertiesLib
 {
+    /// <summary>
+    /// Class for calculating properties of humid air using the Lemmon [2000] equation of state.
+    /// </summary>
     public class HumidAirPropertiesCalculator
     {
-        /// <summary>
-        /// From RP-1485, molar mass of dry air for use in psychrometric calculations.
-        /// </summary>
         public static readonly double MolarMassDryAir = 0.02896546; // kg / mol
 
         public static readonly double MolarMassWater = 0.018015268; // kg / mol
