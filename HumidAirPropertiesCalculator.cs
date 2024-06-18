@@ -15,11 +15,11 @@
 
         public static readonly double NormalPressure = 101325.0; // Pa
 
-        public static readonly double AirMaxCondenThermTemperature = 132.6312; // K
+        public static readonly double DryAirMaxCondenThermTemperature = 132.6312; // K
 
-        public static readonly double AirMaxCondenThermDensity = 10447.7; // mol / m^3
+        public static readonly double DryAirMaxCondenThermDensity = 10447.7; // mol / m^3
 
-        public static readonly double AirMaxCondenThermPressure = 3.78502e6; // Pa
+        public static readonly double DryAirMaxCondenThermPressure = 3.78502e6; // Pa
 
         private static readonly Dictionary<int, double> DimensionlessDryAirIdealGasHelmholtzCoefficients = new()
         {
@@ -38,7 +38,7 @@
             { 13,  87.31279 }
         };
 
-        private static readonly List<(double Nk, int ik, double jk, int lk)> DimensionlessResidualHelmholtzCoefficients =
+        private static readonly List<(double Nk, int ik, double jk, int lk)> DimensionlessDryAirResidualHelmholtzCoefficients =
         [
             (0.118160747229, 1, 0.00, 0),
             (0.713116392079, 1, 0.33, 0),
@@ -62,10 +62,10 @@
         ];
 
         /// <summary>
-        /// Calculates the ideal gas contribution to the Helmholtz energy equation from Lemmon [2000] for dry air.
+        /// Calculates the ideal gas contribution to the Reduced Helmholtz energy equation from Lemmon [2000] for dry air.
         /// </summary>
-        /// <param name="reciprocalReducedTemperature">Dimensionless temperature, scaled by AirMaxCondenThermTemperature</param>
-        /// <param name="reducedDensity">Dimensionless density, scaled by AirMaxCondenThermDensity </param>
+        /// <param name="reciprocalReducedTemperature">Dimensionless temperature, scaled by DryAirMaxCondenThermTemperature</param>
+        /// <param name="reducedDensity">Dimensionless density, scaled by DryAirMaxCondenThermDensity </param>
         /// <returns>Ideal gas dimensionless Helmholtz energy (A0 / RT)</returns>
         public static double CalculateDimensionlessIdealGasHelmholtzEnergy(double reciprocalReducedTemperature, double reducedDensity)
         {
@@ -95,40 +95,90 @@
         }
 
         /// <summary>
-        /// Calculates the residual contribution to the Helmholtz energy equation from Lemmon [2000] for dry air.
+        /// Calculates the residual contribution to the Reduced Helmholtz energy equation from Lemmon [2000] for dry air.
         /// </summary>
         public static double CalculateDimensionlessResidualHelmholtzEnergy(double reciprocalReducedTemperature, double reducedDensity)
         {
             var termOneSum = 0.0;
             for (var i = 0; i < 10; i++)
             {
-                var coefficient = DimensionlessResidualHelmholtzCoefficients[i];
+                var coefficient = DimensionlessDryAirResidualHelmholtzCoefficients[i];
                 termOneSum += coefficient.Nk * Math.Pow(reducedDensity, coefficient.ik) * Math.Pow(reciprocalReducedTemperature, coefficient.jk);
             }
             var termTwoSum = 0.0;
-            for (var i = 10; i < DimensionlessResidualHelmholtzCoefficients.Count; i++)
+            for (var i = 10; i < DimensionlessDryAirResidualHelmholtzCoefficients.Count; i++)
             {
-                var coefficient = DimensionlessResidualHelmholtzCoefficients[i];
+                var coefficient = DimensionlessDryAirResidualHelmholtzCoefficients[i];
                 termTwoSum += coefficient.Nk * Math.Pow(reducedDensity, coefficient.ik) * Math.Pow(reciprocalReducedTemperature, coefficient.jk) * Math.Exp(-Math.Pow(reducedDensity, coefficient.lk));
             }
             return termOneSum + termTwoSum;
         }
 
+        /// <summary>
+        /// Calculates the first derivative of the residual contribution to the Reduced Helmholtz energy equation from Lemmon [2000] for dry air.
+        /// </summary>
         public static double CalculateDimensionlessResidualHelmholtzEnergyFirstDerivativeWithRespectToReducedDensity(double reciprocalReducedTemperature, double reducedDensity)
         {
             var termOneSum = 0.0;
             for (var i = 0; i < 10; i++)
             {
-                var coefficient = DimensionlessResidualHelmholtzCoefficients[i];
+                var coefficient = DimensionlessDryAirResidualHelmholtzCoefficients[i];
                 termOneSum += coefficient.Nk * coefficient.ik * Math.Pow(reducedDensity, (coefficient.ik - 1)) * Math.Pow(reciprocalReducedTemperature, coefficient.jk);
             }
             var termTwoSum = 0.0;
-            for (var i = 10; i < DimensionlessResidualHelmholtzCoefficients.Count; i++)
+            for (var i = 10; i < DimensionlessDryAirResidualHelmholtzCoefficients.Count; i++)
             {
-                var coefficient = DimensionlessResidualHelmholtzCoefficients[i];
+                var coefficient = DimensionlessDryAirResidualHelmholtzCoefficients[i];
                 termTwoSum += coefficient.Nk * (coefficient.ik - coefficient.lk * Math.Pow(reducedDensity, coefficient.lk)) * Math.Pow(reducedDensity, coefficient.ik - 1) * Math.Pow(reciprocalReducedTemperature, coefficient.jk) * Math.Exp(-Math.Pow(reducedDensity, coefficient.lk));
             }
             return termOneSum + termTwoSum;
+        }
+
+        /// <summary>
+        /// Calculates the second derivative of the residual contribution to the Reduced Helmholtz energy equation from Lemmon [2000] for dry air.
+        /// </summary>
+        public static double CalculateDimensionlessResidualHelmholtzEnergySecondDerivativeWithRespectToReducedDensity(double reciprocalReducedTemperature, double reducedDensity)
+        {
+            var termOneSum = 0.0;
+            for (var i = 0; i < 10; i++)
+            {
+                var coefficient = DimensionlessDryAirResidualHelmholtzCoefficients[i];
+                termOneSum += coefficient.Nk * coefficient.ik * (coefficient.ik - 1) * Math.Pow(reducedDensity, (coefficient.ik - 2)) * Math.Pow(reciprocalReducedTemperature, coefficient.jk);
+            }
+            var termTwoSum = 0.0;
+            for (var i = 10; i < DimensionlessDryAirResidualHelmholtzCoefficients.Count; i++)
+            {
+                var coefficient = DimensionlessDryAirResidualHelmholtzCoefficients[i];
+                termTwoSum += coefficient.Nk * Math.Pow(reducedDensity, coefficient.ik - 2) * Math.Pow(reciprocalReducedTemperature, coefficient.jk)
+                              * ((coefficient.ik - coefficient.lk * Math.Pow(reducedDensity, coefficient.lk)) * (coefficient.ik - 1.0 - coefficient.lk * Math.Pow(reducedDensity, coefficient.lk)) - Math.Pow(coefficient.lk, 2) * Math.Pow(reducedDensity, coefficient.lk))
+                              * Math.Exp(-Math.Pow(reducedDensity, coefficient.lk));
+            }
+            return termOneSum + termTwoSum;
+        }
+
+        public static double CalculateDimensionlessIdealGasHelmholtzEnergyFirstDerivativeWithRespectToReciprocalReducedTemperature(double reciprocalReducedTemperature, double reducedDensity)
+        {
+            var termTwo = 0.0;
+            for (var i = 1; i < 6; i++)
+            {
+                termTwo += DimensionlessDryAirIdealGasHelmholtzCoefficients[i] * (i - 4.0) * Math.Pow(reciprocalReducedTemperature, i - 5.0);
+            }
+
+            var termThree = 1.5 * DimensionlessDryAirIdealGasHelmholtzCoefficients[6] * Math.Sqrt(reciprocalReducedTemperature);
+
+            var termFour = DimensionlessDryAirIdealGasHelmholtzCoefficients[7] / reciprocalReducedTemperature;
+
+            var termFive = (DimensionlessDryAirIdealGasHelmholtzCoefficients[8] * DimensionlessDryAirIdealGasHelmholtzCoefficients[11]) / (Math.Exp(DimensionlessDryAirIdealGasHelmholtzCoefficients[11] * reciprocalReducedTemperature) - 1.0);
+
+            var termSix = (DimensionlessDryAirIdealGasHelmholtzCoefficients[9] * DimensionlessDryAirIdealGasHelmholtzCoefficients[12]) / (Math.Exp(DimensionlessDryAirIdealGasHelmholtzCoefficients[12] * reciprocalReducedTemperature) - 1.0);
+
+            const double twoThirds = 2.0 / 3.0;
+            var termSevenLogTermTwo = DimensionlessDryAirIdealGasHelmholtzCoefficients[13] * reciprocalReducedTemperature;
+            var expTermSevenLogTermTwo = Math.Exp(-termSevenLogTermTwo);
+            var termSeven = (DimensionlessDryAirIdealGasHelmholtzCoefficients[10] * DimensionlessDryAirIdealGasHelmholtzCoefficients[13]) / (twoThirds * expTermSevenLogTermTwo + 1);
+
+            var termSummation = termTwo + termThree + termFour + termFive + termSix + termSeven;
+            return termSummation;
         }
 
         public static double CalculateDimensionlessHelmholtzEnergy(double reciprocalReducedTemperature, double reducedDensity)
@@ -138,47 +188,60 @@
             return idealGasHelmholtzEnergy + residualHelmholtzEnergy;
         }
 
-        public static (double, double) CalculateDryAirDensityError(double molarDensity, double temperature, double specifiedPressure)
+        public static (double, double) CalculateDryAirDensityError(double temperature, double molarDensity, double specifiedPressure)
         {
-            var RT = UniversalGasConstantLemmon * temperature;
             var (reciprocalReducedTemperature, reducedDensity) = CalculateDryAirReducedTerms(temperature, molarDensity);
 
-            throw new NotImplementedException();
+            var calculatedPressure = CalculateDryAirPressure(temperature, molarDensity);
+            var error = calculatedPressure - specifiedPressure;
+
+            var dAdDelta = CalculateDimensionlessResidualHelmholtzEnergyFirstDerivativeWithRespectToReducedDensity(reciprocalReducedTemperature, reducedDensity);
+            var dA2dDelta2 = CalculateDimensionlessResidualHelmholtzEnergySecondDerivativeWithRespectToReducedDensity(reciprocalReducedTemperature, reducedDensity);
+            var RT = UniversalGasConstantLemmon * temperature;
+            // Calculate the derivative of the pressure with respect to density
+            var dPdrho = RT * (1.0 + 2 * reducedDensity * dAdDelta + reducedDensity * reducedDensity * dA2dDelta2);
+            return (error, dPdrho);
         }
 
+        /// <summary>
+        /// Calculates the molar density of dry air using the Lemmon [2000] equation of state.
+        /// </summary>
+        /// <param name="temperature">Temperature in Kelvin</param>
+        /// <param name="pressure">Pressure in Pascal</param>
+        /// <returns>Molar density of dry air in mol m-3</returns>
+        /// <exception cref="Exception">Root finding convergence failure exception</exception>
         public static double CalculateDryAirDensity(double temperature, double pressure)
         {
-            // Set up coefficients for the iterative solution. Use a root-finding algorithm to solve for the density.
+            // Set up coefficients for the iterative solution. Use a midpoint root-finding algorithm to solve for the density.
             var a = 1e-20; // Value where error is always negative
             var b = 5000000.0; // Value where error is always positive
 
-            var density = pressure / (UniversalGasConstantLemmon * temperature); // Initial guess using ideal gas law
+            var molarDensity = pressure / (UniversalGasConstantLemmon * temperature); // Initial guess using ideal gas law
             var densityOld = 100000.0;
 
             var iterations = 0;
-            while (iterations < 2 || ((Math.Abs(densityOld - density) > Math.Abs(1e-13 * density)) && iterations < 100))
+            while (iterations < 2 || ((Math.Abs(densityOld - molarDensity) > Math.Abs(1e-13 * molarDensity)) && iterations < 100))
             {
-                densityOld = density;
-                var (error, derror) = CalculateDryAirDensityError(density, temperature, pressure);
+                var (error, derror) = CalculateDryAirDensityError(temperature, molarDensity, pressure);
                 if (error < 0)
                 {
-                    a = density;
+                    a = molarDensity;
                 }
                 else
                 {
-                    b = density;
+                    b = molarDensity;
                 }
                 var dDensity = -error / derror;
-                densityOld = density;
-                density += dDensity;
-                if (density < a || density > b)
+                densityOld = molarDensity;
+                molarDensity += dDensity;
+                if (molarDensity < a || molarDensity > b)
                 {
-                    density = 0.5 * (a + b);
+                    molarDensity = 0.5 * (a + b);
                 }
                 iterations++;
             }
             if (iterations >= 99) throw new Exception("Failed to converge");
-            return density;
+            return molarDensity;
         }
 
         public static double CalculateDryAirPressure(double temperature, double molarDensity)
@@ -197,7 +260,7 @@
         /// <returns>A tuple containing (Reciprocal Reduced Temperature, Reduced Density)</returns>
         public static (double, double) CalculateDryAirReducedTerms(double temperature, double molarDensity)
         {
-            return (AirMaxCondenThermTemperature / temperature, molarDensity / AirMaxCondenThermDensity);
+            return (DryAirMaxCondenThermTemperature / temperature, molarDensity / DryAirMaxCondenThermDensity);
         }
     }
 }
