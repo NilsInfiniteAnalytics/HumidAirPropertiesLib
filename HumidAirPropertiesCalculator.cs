@@ -181,6 +181,23 @@
             return termSummation;
         }
 
+        public static double CalculateDimensionlessResidualHelmholtzEnergyFirstDerivativeWithRespectToReciprocalReducedTemperature(double reciprocalReducedTemperature, double reducedDensity)
+        {
+            var termOneSum = 0.0;
+            for (var i = 0; i < 10; i++)
+            {
+                var coefficient = DimensionlessDryAirResidualHelmholtzCoefficients[i];
+                termOneSum += coefficient.Nk * Math.Pow(reducedDensity, coefficient.ik) * coefficient.jk * Math.Pow(reciprocalReducedTemperature, coefficient.jk - 1);
+            }
+            var termTwoSum = 0.0;
+            for (var i = 10; i < DimensionlessDryAirResidualHelmholtzCoefficients.Count; i++)
+            {
+                var coefficient = DimensionlessDryAirResidualHelmholtzCoefficients[i];
+                termTwoSum += coefficient.Nk * Math.Pow(reducedDensity, coefficient.ik) * coefficient.jk * Math.Pow(reciprocalReducedTemperature, coefficient.jk - 1) * Math.Exp(-Math.Pow(reducedDensity, coefficient.lk));
+            }
+            return termOneSum + termTwoSum;
+        }
+
         public static double CalculateDimensionlessHelmholtzEnergy(double reciprocalReducedTemperature, double reducedDensity)
         {
             var idealGasHelmholtzEnergy = CalculateDimensionlessIdealGasHelmholtzEnergy(reciprocalReducedTemperature, reducedDensity);
