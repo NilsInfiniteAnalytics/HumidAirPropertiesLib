@@ -491,7 +491,7 @@
             var dAdDelta = CalculateDryAirDimensionlessResidualHelmholtzEnergyFirstDerivativeWithRespectToReducedDensity(reciprocalReducedTemperature, reducedDensity);
             var d2AdDelta2 = CalculateDryAirDimensionlessResidualHelmholtzEnergySecondDerivativeWithRespectToReducedDensity(reciprocalReducedTemperature, reducedDensity);
             var d2ARdDeltadTau = CalculateDryAirDimensionlessResidualHelmholtzEnergySecondMixedDerivativeWithRespectToReciprocalReducedTemperatureThenReducedDensity(reciprocalReducedTemperature, reducedDensity);
-            var numerator = 1 + reducedDensity * dAdDelta - d2ARdDeltadTau;
+            var numerator = 1 + reducedDensity * dAdDelta - reducedDensity * reciprocalReducedTemperature * d2ARdDeltadTau;
             var denominator = 1 + 2 * reducedDensity * dAdDelta + reducedDensity * reciprocalReducedTemperature * d2AdDelta2;
             var termTwo = Math.Pow(numerator, 2.0) / denominator;
             return isochoricSpecificHeat + UniversalGasConstantLemmon * termTwo;
